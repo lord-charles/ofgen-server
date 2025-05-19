@@ -68,9 +68,7 @@ export class UserService {
 
   async findAll(filterDto: UserFilterDto): Promise<{ users: User[] }> {
     const { status, page = 1, limit = 10 } = filterDto;
-    const query = this.userModel.find({
-      status,
-    });
+    const query = this.userModel.find();
     const users = await query.skip((page - 1) * limit).limit(limit).exec();
     return { users };
   }
