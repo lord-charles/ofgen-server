@@ -15,22 +15,14 @@ export class LocationController {
   @ApiResponse({ status: 201, description: 'Location created', type: Location })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async create(@Body() createDto: CreateLocationDto): Promise<Location> {
-    try {
-      return await this.locationService.create(createDto);
-    } catch (error) {
-      throw new BadRequestException(error.message || 'Failed to create location');
-    }
+    return await this.locationService.create(createDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all locations/sites', description: 'Returns all solar project sites in Kenya.' })
   @ApiResponse({ status: 200, description: 'List of locations', type: [Location] })
   async findAll(): Promise<Location[]> {
-    try {
-      return await this.locationService.findAll();
-    } catch (error) {
-      throw new BadRequestException(error.message || 'Failed to fetch locations');
-    }
+    return await this.locationService.findAll();
   }
 
   @Get(':id')
@@ -38,12 +30,7 @@ export class LocationController {
   @ApiResponse({ status: 200, description: 'Location found', type: Location })
   @ApiResponse({ status: 404, description: 'Location not found' })
   async findOne(@Param('id') id: string): Promise<Location> {
-    try {
-      return await this.locationService.findOne(id);
-    } catch (error) {
-      if (error.status === 404) throw error;
-      throw new BadRequestException(error.message || 'Failed to fetch location');
-    }
+    return await this.locationService.findOne(id);
   }
 
   @Patch(':id')
@@ -51,12 +38,7 @@ export class LocationController {
   @ApiResponse({ status: 200, description: 'Location updated', type: Location })
   @ApiResponse({ status: 404, description: 'Location not found' })
   async update(@Param('id') id: string, @Body() updateDto: UpdateLocationDto): Promise<Location> {
-    try {
-      return await this.locationService.update(id, updateDto);
-    } catch (error) {
-      if (error.status === 404) throw error;
-      throw new BadRequestException(error.message || 'Failed to update location');
-    }
+    return await this.locationService.update(id, updateDto);
   }
 
   @Delete(':id')
@@ -64,11 +46,6 @@ export class LocationController {
   @ApiResponse({ status: 204, description: 'Location deleted' })
   @ApiResponse({ status: 404, description: 'Location not found' })
   async remove(@Param('id') id: string): Promise<void> {
-    try {
-      await this.locationService.remove(id);
-    } catch (error) {
-      if (error.status === 404) throw error;
-      throw new BadRequestException(error.message || 'Failed to delete location');
-    }
+    await this.locationService.remove(id);
   }
 }

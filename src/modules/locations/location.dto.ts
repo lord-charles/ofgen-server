@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, ValidateNested, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, ValidateNested, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { SiteType, LocationStatus } from './location.schema';
 
 export class CoordinatesDto {
   @ApiProperty({ description: 'Latitude of the location', example: -1.2921 })
@@ -33,6 +34,20 @@ export class CreateLocationDto {
   @Type(() => CoordinatesDto)
   @IsOptional()
   coordinates?: CoordinatesDto;
+
+  @ApiProperty({ enum: SiteType, description: 'Type of site: indoor or outdoor', example: SiteType.OUTDOOR })
+  @IsEnum(SiteType)
+  siteType: SiteType;
+
+  @ApiProperty({ description: 'User-input site ID', example: 'ABC-123', required: false })
+  @IsString()
+  @IsOptional()
+  siteId?: string;
+
+  @ApiProperty({ enum: LocationStatus, description: 'Site status', example: LocationStatus.ACTIVE, required: false })
+  @IsEnum(LocationStatus)
+  @IsOptional()
+  status?: LocationStatus;
 }
 
 export class UpdateLocationDto {
@@ -56,4 +71,20 @@ export class UpdateLocationDto {
   @Type(() => CoordinatesDto)
   @IsOptional()
   coordinates?: CoordinatesDto;
+
+  @ApiProperty({ enum: SiteType, description: 'Type of site: indoor or outdoor', required: false })
+  @IsEnum(SiteType)
+  @IsOptional()
+  siteType?: SiteType;
+
+  @ApiProperty({ description: 'User-input site ID', example: 'ABC-123', required: false })
+  @IsString()
+  @IsOptional()
+  siteId?: string;
+
+  @ApiProperty({ enum: LocationStatus, description: 'Site status', example: LocationStatus.ACTIVE, required: false })
+  @IsEnum(LocationStatus)
+  @IsOptional()
+  status?: LocationStatus;
 }
+
