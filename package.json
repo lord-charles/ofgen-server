@@ -1,8 +1,8 @@
 {
   "name": "ofgen-server",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
-  "author": "",
+  "author": "lord-charles",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
