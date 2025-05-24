@@ -42,7 +42,7 @@ export class Location {
   siteType: SiteType;
 
   @ApiProperty({ description: 'User-input site ID', example: 'ABC-123', required: false })
-  @Prop({ required: false, unique: true, sparse: true })
+  @Prop({ required: false })
   siteId?: string;
 
   @ApiProperty({ description: 'System-generated unique site ID', example: 'OFGEN-20250523-XYZ123', readOnly: true })
