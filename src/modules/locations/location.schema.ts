@@ -7,11 +7,15 @@ import { customAlphabet } from 'nanoid';
 export enum SiteType {
   INDOOR = 'indoor',
   OUTDOOR = 'outdoor',
+  ROOF_TOP = 'rooftop',
+  GROUND = 'ground',
 }
 
 export enum LocationStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
+  MAINTENANCE = 'maintenance',
+  PENDING = 'pending',
 }
 
 export type LocationDocument = Location & Document;
