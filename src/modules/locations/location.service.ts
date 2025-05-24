@@ -14,10 +14,6 @@ export class LocationService {
 
   async create(createDto: CreateLocationDto): Promise<Location> {
     try {
-      if (createDto.siteId) {
-        const exists = await this.locationModel.findOne({ siteId: createDto.siteId });
-        if (exists) throw new BadRequestException('siteId already exists');
-      }
       const created = new this.locationModel(createDto);
       return await created.save();
     } catch (error) {
