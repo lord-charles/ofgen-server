@@ -12,18 +12,6 @@ async function bootstrap() {
   // Enable CORS
   app.enableCors();
 
-  // Use global validation pipe with strict settings
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
-
   // Set global prefix for all routes
   app.setGlobalPrefix('ofgen/api');
 

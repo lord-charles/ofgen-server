@@ -7,6 +7,7 @@ import { SystemLogsModule } from './modules/system-logs/system-logs.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { ServiceOrderModule } from './modules/service-order/service-order.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
     NotificationsModule,
     LocationsModule,
     ProjectsModule,
+    ServiceOrderModule
   ],
   controllers: [],
   providers: [],
