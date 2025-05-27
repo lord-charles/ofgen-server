@@ -41,6 +41,13 @@ export class LocationController {
     return await this.locationService.update(id, updateDto);
   }
 
+  @Get('get/basic-info')
+  @ApiOperation({ summary: 'Get basic location information', description: 'Returns name, siteId, and systemSiteId for all locations' })
+  @ApiResponse({ status: 200, description: 'Basic location information', type: [Location] })
+  async getBasicInfo(): Promise<Pick<Location, 'name' | 'siteId' | 'systemSiteId'>[]> {
+    return await this.locationService.getBasicInfo();
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete location/site by ID', description: 'Delete a site by MongoDB ObjectId.' })
   @ApiResponse({ status: 204, description: 'Location deleted' })
