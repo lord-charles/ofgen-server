@@ -56,6 +56,22 @@ export class UserController {
     });
   }
 
+  @Get('/users/basic-info')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'List all employees',
+    description:
+      'Returns paginated list of employees. All filters are optional.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Employees retrieved successfully',
+  })
+  async basicInfo() {
+    return this.userService.basicInfo();
+  }
+
   // Get user by ID - Returns detailed user information
   @Get('/user/:id')
   @UseGuards(JwtAuthGuard)

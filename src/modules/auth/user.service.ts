@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -16,6 +17,7 @@ import { SystemLogsService } from '../system-logs/services/system-logs.service';
 import { LogSeverity } from '../system-logs/schemas/system-log.schema';
 import { Request } from 'express';
 import { UserFilterDto } from './dto/filter.dto';
+import { error } from 'console';
 
 @Injectable()
 export class UserService {
@@ -71,6 +73,15 @@ export class UserService {
     const query = this.userModel.find();
     const users = await query.skip((page - 1) * limit).limit(limit).exec();
     return { users };
+  }
+
+  async basicInfo(): Promise<{ users: User[] }> {
+    try {
+      const users = await this.userModel.find().select('firstName lastName email phoneNumber nationalId').exec();
+      return { users };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to retrieve users');
+    }
   }
   async findById(id: string): Promise<User | null> {
     const user = await this.userModel.findById(id).exec();

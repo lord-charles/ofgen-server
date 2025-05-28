@@ -52,43 +52,89 @@ export enum SubcontractorSpecialty {
 
 @Schema({ timestamps: true })
 export class Subcontractor {
-  @ApiProperty({ description: 'Subcontractor company name' })
-  @Prop({ trim: true })
-  @IsString()
-  @IsOptional()
-  companyName?: string;
-
-  //
-  @ApiProperty({ description: 'Is the subcontractor a company' })
+  // Common fields for both companies and individuals
+  @ApiProperty({ description: 'Is the subcontractor a company', example: true })
   @Prop({ default: false })
   @IsBoolean()
   isCompany: boolean;
 
-  @ApiProperty({ description: 'Primary contact person name' })
-  @Prop({ trim: true })
-  @IsString()
-  @IsOptional()
-  contactPerson?: string;
-
-  @ApiProperty({ description: 'Contact email address' })
+  @ApiProperty({ description: 'Email address', example: 'info@nairobielec.co.ke' })
   @Prop({ lowercase: true, trim: true })
   @IsString()
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ description: 'Primary phone number' })
+  @ApiProperty({ description: 'Phone number', example: '+254712345678' })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ description: 'Company physical address' })
+  @ApiProperty({ description: 'Physical address', example: 'Kimathi Street, Nairobi CBD' })
   @Prop({ trim: true })
   @IsOptional()
   @IsString()
   address?: string;
 
-  @ApiProperty({ description: 'Current rating/performance score (1-5)' })
+  // Company-specific fields
+  @ApiProperty({ description: 'Company name (when isCompany=true)', example: 'Nairobi Electrical Solutions Ltd' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  companyName?: string;
+
+  @ApiProperty({ description: 'Company registration number (when isCompany=true)', example: 'KE-C-123456' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  registrationNumber?: string;
+
+  @ApiProperty({ description: 'KRA PIN (when isCompany=true)', example: 'A123456789B' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  taxPin?: string;
+
+  @ApiProperty({ description: 'Primary contact person name (when isCompany=true)', example: 'John Kamau' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  contactPerson?: string;
+
+  // Individual-specific fields
+  @ApiProperty({ description: 'First name (when isCompany=false)', example: 'John' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @ApiProperty({ description: 'Last name (when isCompany=false)', example: 'Kamau' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
+  @ApiProperty({ description: 'National ID number (when isCompany=false)', example: '12345678' })
+  @Prop({ trim: true })
+  @IsString()
+  @IsOptional()
+  nationalId?: string;
+
+  // Specialty and skills
+  @ApiProperty({ description: 'Specialty/expertise area', enum: SubcontractorSpecialty, example: SubcontractorSpecialty.ELECTRICAL })
+  @Prop({ enum: Object.values(SubcontractorSpecialty), type: String })
+  @IsEnum(SubcontractorSpecialty)
+  @IsOptional()
+  specialty?: SubcontractorSpecialty;
+
+  @ApiProperty({ description: 'Additional skills or certifications', example: ['Solar PV Installation', 'Electrical Wiring'] })
+  @Prop({ type: [String], default: [] })
+  @IsArray()
+  @IsOptional()
+  skills?: string[];
+
+  // Rating and status
+  @ApiProperty({ description: 'Performance rating (1-5)', example: 4.5 })
   @Prop({ min: 1, max: 5 })
   @IsOptional()
   @IsNumber()
@@ -96,11 +142,12 @@ export class Subcontractor {
   @Max(5)
   rating?: number;
 
-  @ApiProperty({ description: 'Whether subcontractor is currently active' })
+  @ApiProperty({ description: 'Whether subcontractor is currently active', example: true })
   @Prop({ default: true })
+  @IsBoolean()
   isActive: boolean;
 
-  @ApiProperty({ description: 'Additional notes about the subcontractor' })
+  @ApiProperty({ description: 'Additional notes about the subcontractor', example: 'Reliable electrical contractor with experience in solar installations across Kenya.' })
   @Prop({ trim: true })
   @IsOptional()
   @IsString()
@@ -176,7 +223,7 @@ export class Task {
   notes?: string;
 }
 
-const TaskSchema = SchemaFactory.createForClass(Task);
+export const TaskSchema = SchemaFactory.createForClass(Task);
 
 @Schema({ _id: false })
 export class Milestone {
@@ -220,7 +267,7 @@ export class Milestone {
   deliverables: string[];
 }
 
-const MilestoneSchema = SchemaFactory.createForClass(Milestone);
+export const MilestoneSchema = SchemaFactory.createForClass(Milestone);
 
 @Schema({ _id: false })
 export class RiskItem {
@@ -290,7 +337,7 @@ export class RiskItem {
   notes?: string;
 }
 
-const RiskItemSchema = SchemaFactory.createForClass(RiskItem);
+export const RiskItemSchema = SchemaFactory.createForClass(RiskItem);
 
 
 // ========================= MAIN PROJECT SCHEMA =========================
@@ -302,11 +349,6 @@ export class Project {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Project reference/code' })
-  @Prop({ required: true, unique: true, trim: true })
-  @IsString()
-  projectCode: string;
-
   @ApiProperty({ description: 'Linked Safaricom service order ID' })
   @Prop({ type: Types.ObjectId, ref: 'ServiceOrder', required: true })
   serviceOrder: Types.ObjectId;
@@ -314,13 +356,15 @@ export class Project {
   // ============= OFGEN TEAM STRUCTURE =============
 
   @ApiProperty({ description: 'Ofgen project leader responsible for overall project management' })
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  projectLeader: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @IsOptional()
+  projectLeader?: Types.ObjectId;
 
   @ApiProperty({ description: 'Subcontractors assigned to execute project tasks' })
   @Prop({ type: [Types.ObjectId], ref: 'Subcontractor', default: [] })
   @IsArray()
-  subcontractors: Types.ObjectId[];
+  @IsOptional()
+  subcontractors?: Types.ObjectId[];
 
   // ============= PROJECT DETAILS =============
 
@@ -383,19 +427,22 @@ export class Project {
   @ApiProperty({ description: 'Project milestones', type: [Milestone] })
   @Prop({ type: [MilestoneSchema], default: [] })
   @IsArray()
-  milestones: Milestone[];
+  @IsOptional()
+  milestones?: Milestone[];
 
   @ApiProperty({ description: 'Project risks and mitigation plans', type: [RiskItem] })
   @Prop({ type: [RiskItemSchema], default: [] })
   @IsArray()
-  risks: RiskItem[];
+  @IsOptional()
+  risks?: RiskItem[];
 
   // ============= ADDITIONAL METADATA =============
 
   @ApiProperty({ description: 'Project priority level', enum: TaskPriority })
   @Prop({ enum: Object.values(TaskPriority), default: TaskPriority.MEDIUM })
   @IsEnum(TaskPriority)
-  priority: TaskPriority;
+  @IsOptional()
+  priority?: TaskPriority;
 
   @ApiProperty({ description: 'Contract value from Safaricom' })
   @Prop({ min: 0 })
@@ -418,6 +465,7 @@ export class Project {
 
   @ApiProperty({ description: 'Whether project is currently active' })
   @Prop({ default: true })
+  @IsBoolean()
   isActive: boolean;
 
   // Computed fields (virtual or calculated)
