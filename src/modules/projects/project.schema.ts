@@ -9,6 +9,7 @@ export type SubcontractorDocument = Subcontractor & Document;
 // ========================= ENUMS =========================
 
 export enum ProjectStatus {
+  DRAFT = 'Draft',
   PLANNED = 'Planned',
   IN_PROGRESS = 'In Progress',
   ON_HOLD = 'On Hold',
