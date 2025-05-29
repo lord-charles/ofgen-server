@@ -67,7 +67,7 @@ export class LocationService {
 
   async getBasicInfo(): Promise<Pick<Location, 'name' | 'siteId' | 'systemSiteId'>[]> {
     try {
-      return await this.locationModel.find({}, { name: 1, siteId: 1, systemSiteId: 1, _id: 0 }).exec();
+      return await this.locationModel.find({}, { name: 1, siteId: 1, systemSiteId: 1, _id: 1 }).exec();
     } catch (error) {
       this.logger.error('Error fetching basic location info', error.stack || error.message);
       throw new BadRequestException(error.message || 'Failed to fetch basic location info');
