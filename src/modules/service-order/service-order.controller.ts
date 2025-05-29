@@ -46,6 +46,17 @@ export class ServiceOrderController {
     return this.serviceOrderService.findAll(query);
   }
 
+  @Get('basic-info')
+  @ApiOperation({ summary: 'Get basic info of service orders with filtering' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of service orders',
+    type: [ServiceOrder],
+  })
+  async getBasicInfo() {
+    return this.serviceOrderService.getBasicInfo();
+  }
+
   @Get('statistics')
   @ApiOperation({ summary: 'Get service order statistics' })
   @ApiResponse({

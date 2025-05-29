@@ -62,6 +62,13 @@ export class ServiceOrderService {
       .exec();
   }
 
+  async getBasicInfo() {
+    return this.serviceOrderModel
+      .find().select('issuedBy issuedTo serviceOrderDate _id status')
+      .sort({ serviceOrderDate: -1 })
+      .exec();
+  }
+
   async findOne(id: string): Promise<ServiceOrder> {
     const order = await this.serviceOrderModel.findById(id).exec();
     if (!order) {
