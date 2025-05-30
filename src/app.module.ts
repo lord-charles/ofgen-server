@@ -8,6 +8,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { LocationsModule } from './modules/locations/locations.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ServiceOrderModule } from './modules/service-order/service-order.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { ServiceOrderModule } from './modules/service-order/service-order.module
     NotificationsModule,
     LocationsModule,
     ProjectsModule,
-    ServiceOrderModule
+    ServiceOrderModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
