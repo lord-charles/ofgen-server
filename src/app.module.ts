@@ -9,6 +9,7 @@ import { LocationsModule } from './modules/locations/locations.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ServiceOrderModule } from './modules/service-order/service-order.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ProjectsModule,
     ServiceOrderModule,
     DashboardModule,
+    InventoryModule,
   ],
   controllers: [],
   providers: [],
