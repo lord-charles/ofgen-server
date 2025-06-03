@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Project, ProjectStatus } from '../projects/project.schema';
@@ -23,6 +23,11 @@ import {
   ExpensesDto,
 } from './dashboard.dto';
 import { User } from '../auth/schemas/user.schema';
+import { DashboardStatsDto } from '../inventory/inventory.dto';
+import {
+  InventoryItem,
+  InventoryTransaction,
+} from '../inventory/inventory.schema';
 
 @Injectable()
 export class DashboardService {
@@ -34,7 +39,12 @@ export class DashboardService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Subcontractor.name)
     private subcontractorModel: Model<Subcontractor>,
+    @InjectModel(InventoryItem.name)
+    private inventoryModel: Model<InventoryItem>,
+    @InjectModel(InventoryTransaction.name)
+    private transactionModel: Model<InventoryTransaction>,
   ) {}
+  private readonly logger = new Logger(DashboardService.name);
 
   async getDashboardData(): Promise<DashboardDto> {
     const [
@@ -359,9 +369,12 @@ export class DashboardService {
             impact: risk.impact || 5,
             status: risk.status,
             owner: risk.owner
-              ? (typeof project.projectLeader === 'object' && project.projectLeader && 'firstName' in project.projectLeader && 'lastName' in project.projectLeader
+              ? typeof project.projectLeader === 'object' &&
+                project.projectLeader &&
+                'firstName' in project.projectLeader &&
+                'lastName' in project.projectLeader
                 ? `${project.projectLeader.firstName} ${project.projectLeader.lastName}`
-                : 'Unassigned')
+                : 'Unassigned'
               : 'Unassigned',
             project: project.name,
             identifiedDate:
@@ -488,5 +501,863 @@ export class DashboardService {
       return parts[parts.length - 1].trim();
     }
     return 'Unknown';
+  }
+
+  async getDashboardStats() {
+    try {
+      // Get current date and calculate date ranges for various metrics
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfPrevMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1,
+      );
+      const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+      const ninetyDaysAgo = new Date(now);
+      ninetyDaysAgo.setDate(now.getDate() - 90);
+
+      const [
+        totalItemsResult,
+        valuationResult,
+        stockStatusCounts,
+        monthlyTransactionsData,
+        transactionValueByType,
+        topSellingItems,
+        recentTransactions,
+        inventoryTurnoverData,
+        stockDistributionByCategory,
+        stockDistributionByLocation,
+      ] = await Promise.all([
+        // Total active items count
+        this.inventoryModel.countDocuments({ isActive: true }),
+
+        // Total inventory value with average cost per item
+        this.inventoryModel.aggregate([
+          { $match: { isActive: true } },
+          {
+            $project: {
+              itemCode: 1,
+              itemName: 1,
+              category: 1,
+              totalStock: { $sum: '$stockLevels.currentStock' },
+              standardCost: { $ifNull: ['$pricing.standardCost', 0] },
+              totalValue: {
+                $multiply: [
+                  { $sum: '$stockLevels.currentStock' },
+                  { $ifNull: ['$pricing.standardCost', 0] },
+                ],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalValue: { $sum: '$totalValue' },
+              avgItemValue: { $avg: '$standardCost' },
+              itemCount: { $sum: 1 },
+              highValueItems: {
+                $push: {
+                  $cond: [
+                    { $gt: ['$totalValue', 100000] }, // Items worth more than 100,000
+                    {
+                      itemId: '$_id',
+                      itemCode: '$itemCode',
+                      itemName: '$itemName',
+                      category: '$category',
+                      totalValue: '$totalValue',
+                      quantity: '$totalStock',
+                    },
+                    null,
+                  ],
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              totalValue: 1,
+              avgItemValue: 1,
+              itemCount: 1,
+              highValueItems: {
+                $filter: {
+                  input: '$highValueItems',
+                  as: 'item',
+                  cond: { $ne: ['$$item', null] },
+                },
+              },
+            },
+          },
+        ]),
+
+        // Comprehensive stock status counts
+        this.inventoryModel.aggregate([
+          { $match: { isActive: true } },
+          {
+            $facet: {
+              // Low stock items
+              lowStock: [
+                {
+                  $addFields: {
+                    isLowStock: {
+                      $anyElementTrue: {
+                        $map: {
+                          input: '$stockLevels',
+                          as: 'level',
+                          in: {
+                            $and: [
+                              { $gt: ['$$level.currentStock', 0] },
+                              {
+                                $lte: [
+                                  '$$level.currentStock',
+                                  '$$level.minimumLevel',
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                { $match: { isLowStock: true } },
+                { $count: 'count' },
+              ],
+              // Out of stock items
+              outOfStock: [
+                {
+                  $addFields: {
+                    isOutOfStock: {
+                      $anyElementTrue: {
+                        $map: {
+                          input: '$stockLevels',
+                          as: 'level',
+                          in: { $eq: ['$$level.currentStock', 0] },
+                        },
+                      },
+                    },
+                  },
+                },
+                { $match: { isOutOfStock: true } },
+                { $count: 'count' },
+              ],
+              // Overstocked items
+              overStocked: [
+                {
+                  $addFields: {
+                    isOverStocked: {
+                      $anyElementTrue: {
+                        $map: {
+                          input: '$stockLevels',
+                          as: 'level',
+                          in: {
+                            $and: [
+                              { $gt: ['$$level.maximumLevel', 0] },
+                              {
+                                $gt: [
+                                  '$$level.currentStock',
+                                  '$$level.maximumLevel',
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                { $match: { isOverStocked: true } },
+                { $count: 'count' },
+              ],
+              // Healthy stock items
+              healthyStock: [
+                {
+                  $addFields: {
+                    isHealthyStock: {
+                      $anyElementTrue: {
+                        $map: {
+                          input: '$stockLevels',
+                          as: 'level',
+                          in: {
+                            $and: [
+                              {
+                                $gt: [
+                                  '$$level.currentStock',
+                                  '$$level.minimumLevel',
+                                ],
+                              },
+                              {
+                                $or: [
+                                  { $eq: ['$$level.maximumLevel', null] },
+                                  { $eq: ['$$level.maximumLevel', 0] },
+                                  {
+                                    $lte: [
+                                      '$$level.currentStock',
+                                      '$$level.maximumLevel',
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                { $match: { isHealthyStock: true } },
+                { $count: 'count' },
+              ],
+              // Items with reserved stock
+              reservedStock: [
+                {
+                  $match: {
+                    'stockLevels.reservedStock': { $gt: 0 },
+                  },
+                },
+                { $count: 'count' },
+              ],
+            },
+          },
+          {
+            $project: {
+              lowStockCount: { $arrayElemAt: ['$lowStock.count', 0] },
+              outOfStockCount: { $arrayElemAt: ['$outOfStock.count', 0] },
+              overStockedCount: { $arrayElemAt: ['$overStocked.count', 0] },
+              healthyStockCount: { $arrayElemAt: ['$healthyStock.count', 0] },
+              reservedStockCount: { $arrayElemAt: ['$reservedStock.count', 0] },
+            },
+          },
+        ]),
+
+        // Monthly transactions with daily breakdown and trends
+        this.transactionModel.aggregate([
+          {
+            $match: {
+              transactionDate: { $gte: startOfPrevMonth },
+            },
+          },
+          {
+            $facet: {
+              // Daily transaction counts for current month
+              dailyTransactions: [
+                {
+                  $match: {
+                    transactionDate: { $gte: startOfMonth },
+                  },
+                },
+                {
+                  $group: {
+                    _id: {
+                      $dateToString: {
+                        format: '%Y-%m-%d',
+                        date: '$transactionDate',
+                      },
+                    },
+                    count: { $sum: 1 },
+                    totalQuantity: { $sum: '$quantity' },
+                    totalValue: { $sum: { $ifNull: ['$totalValue', 0] } },
+                  },
+                },
+                { $sort: { _id: 1 } },
+              ],
+              // Current month totals
+              currentMonthSummary: [
+                {
+                  $match: {
+                    transactionDate: { $gte: startOfMonth },
+                  },
+                },
+                {
+                  $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    totalQuantity: { $sum: '$quantity' },
+                    totalValue: { $sum: { $ifNull: ['$totalValue', 0] } },
+                  },
+                },
+              ],
+              // Previous month totals for comparison
+              previousMonthSummary: [
+                {
+                  $match: {
+                    transactionDate: {
+                      $gte: startOfPrevMonth,
+                      $lt: startOfMonth,
+                    },
+                  },
+                },
+                {
+                  $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    totalQuantity: { $sum: '$quantity' },
+                    totalValue: { $sum: { $ifNull: ['$totalValue', 0] } },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $project: {
+              dailyTransactions: 1,
+              currentMonth: { $arrayElemAt: ['$currentMonthSummary', 0] },
+              previousMonth: { $arrayElemAt: ['$previousMonthSummary', 0] },
+            },
+          },
+        ]),
+
+        // Transaction value by type (for financial insights)
+        this.transactionModel.aggregate([
+          {
+            $match: {
+              transactionDate: { $gte: thirtyDaysAgo },
+              totalValue: { $exists: true, $ne: null },
+            },
+          },
+          {
+            $group: {
+              _id: '$transactionType',
+              count: { $sum: 1 },
+              totalValue: { $sum: '$totalValue' },
+              avgValue: { $avg: '$totalValue' },
+            },
+          },
+          {
+            $project: {
+              transactionType: '$_id',
+              _id: 0,
+              count: 1,
+              totalValue: 1,
+              avgValue: 1,
+            },
+          },
+          { $sort: { totalValue: -1 } },
+        ]),
+
+        // Top selling items with more details
+        this.transactionModel.aggregate([
+          {
+            $match: {
+              transactionType: { $in: ['SALE', 'TRANSFER_OUT', 'CONSUMPTION'] },
+              transactionDate: { $gte: thirtyDaysAgo },
+            },
+          },
+          {
+            $group: {
+              _id: '$inventoryItem',
+              totalQuantity: { $sum: '$quantity' },
+              totalValue: { $sum: { $ifNull: ['$totalValue', 0] } },
+              transactionCount: { $sum: 1 },
+              lastTransactionDate: { $max: '$transactionDate' },
+            },
+          },
+          { $sort: { totalQuantity: -1 } },
+          { $limit: 10 },
+          {
+            $lookup: {
+              from: 'inventoryitems',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'itemDetails',
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              totalQuantity: 1,
+              totalValue: 1,
+              transactionCount: 1,
+              lastTransactionDate: 1,
+              itemName: { $arrayElemAt: ['$itemDetails.itemName', 0] },
+              itemCode: { $arrayElemAt: ['$itemDetails.itemCode', 0] },
+              category: { $arrayElemAt: ['$itemDetails.category', 0] },
+              currentStock: {
+                $sum: {
+                  $arrayElemAt: ['$itemDetails.stockLevels.currentStock', 0],
+                },
+              },
+            },
+          },
+        ]),
+
+        // Recent transactions with more context
+        this.transactionModel
+          .find()
+          .sort({ transactionDate: -1 })
+          .limit(5)
+          .populate('inventoryItem', 'itemName itemCode category')
+          .populate('fromLocation', 'name')
+          .populate('toLocation', 'name')
+          .populate('performedBy', 'name')
+          .lean(),
+
+        // Inventory turnover data (for operational efficiency)
+        this.transactionModel.aggregate([
+          {
+            $match: {
+              transactionDate: { $gte: ninetyDaysAgo },
+              transactionType: { $in: ['SALE', 'CONSUMPTION', 'TRANSFER_OUT'] },
+            },
+          },
+          {
+            $group: {
+              _id: '$inventoryItem',
+              totalQuantitySold: { $sum: '$quantity' },
+            },
+          },
+          {
+            $lookup: {
+              from: 'inventoryitems',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'itemDetails',
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              totalQuantitySold: 1,
+              itemName: { $arrayElemAt: ['$itemDetails.itemName', 0] },
+              itemCode: { $arrayElemAt: ['$itemDetails.itemCode', 0] },
+              category: { $arrayElemAt: ['$itemDetails.category', 0] },
+              currentStock: {
+                $sum: {
+                  $arrayElemAt: ['$itemDetails.stockLevels.currentStock', 0],
+                },
+              },
+              turnoverRatio: {
+                $cond: [
+                  {
+                    $gt: [
+                      {
+                        $sum: {
+                          $arrayElemAt: [
+                            '$itemDetails.stockLevels.currentStock',
+                            0,
+                          ],
+                        },
+                      },
+                      0,
+                    ],
+                  },
+                  {
+                    $divide: [
+                      '$totalQuantitySold',
+                      {
+                        $sum: {
+                          $arrayElemAt: [
+                            '$itemDetails.stockLevels.currentStock',
+                            0,
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  0,
+                ],
+              },
+            },
+          },
+          { $match: { turnoverRatio: { $gt: 0 } } },
+          { $sort: { turnoverRatio: -1 } },
+          { $limit: 10 },
+        ]),
+
+        // Stock distribution by category
+        this.inventoryModel.aggregate([
+          { $match: { isActive: true } },
+          {
+            $group: {
+              _id: '$category',
+              itemCount: { $sum: 1 },
+              totalStock: { $sum: { $sum: '$stockLevels.currentStock' } },
+              totalValue: {
+                $sum: {
+                  $multiply: [
+                    { $sum: '$stockLevels.currentStock' },
+                    { $ifNull: ['$pricing.standardCost', 0] },
+                  ],
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              category: '$_id',
+              _id: 0,
+              itemCount: 1,
+              totalStock: 1,
+              totalValue: 1,
+              percentageOfTotal: { $multiply: ['$itemCount', 100] }, // Will be normalized later
+            },
+          },
+          { $sort: { totalValue: -1 } },
+        ]),
+
+        // Stock distribution by location
+        this.inventoryModel.aggregate([
+          { $match: { isActive: true } },
+          { $unwind: '$stockLevels' },
+          {
+            $group: {
+              _id: '$stockLevels.location',
+              totalStock: { $sum: '$stockLevels.currentStock' },
+              itemCount: { $sum: 1 },
+              lowStockCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $gt: ['$stockLevels.currentStock', 0] },
+                        {
+                          $lte: [
+                            '$stockLevels.currentStock',
+                            '$stockLevels.minimumLevel',
+                          ],
+                        },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              outOfStockCount: {
+                $sum: {
+                  $cond: [{ $eq: ['$stockLevels.currentStock', 0] }, 1, 0],
+                },
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: 'stocklocations',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'locationDetails',
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              locationId: '$_id',
+              locationName: { $arrayElemAt: ['$locationDetails.name', 0] },
+              totalStock: 1,
+              itemCount: 1,
+              lowStockCount: 1,
+              outOfStockCount: 1,
+            },
+          },
+          { $sort: { totalStock: -1 } },
+        ]),
+      ]);
+
+      // Process results
+      const totalInventoryValue =
+        valuationResult.length > 0 ? valuationResult[0].totalValue : 0;
+      const avgItemValue =
+        valuationResult.length > 0 ? valuationResult[0].avgItemValue : 0;
+      const highValueItems =
+        valuationResult.length > 0
+          ? valuationResult[0].highValueItems.slice(0, 5)
+          : [];
+
+      // Process stock status counts
+      const lowStockCount = stockStatusCounts[0]?.lowStockCount || 0;
+      const outOfStockCount = stockStatusCounts[0]?.outOfStockCount || 0;
+      const overStockedCount = stockStatusCounts[0]?.overStockedCount || 0;
+      const healthyStockCount = stockStatusCounts[0]?.healthyStockCount || 0;
+      const reservedStockCount = stockStatusCounts[0]?.reservedStockCount || 0;
+
+      // Process monthly transactions data
+      const currentMonthTransactions = monthlyTransactionsData[0]?.count || 0;
+      const previousMonthTransactions = monthlyTransactionsData[0]?.count || 0;
+      const transactionGrowth = previousMonthTransactions
+        ? ((currentMonthTransactions - previousMonthTransactions) /
+            previousMonthTransactions) *
+          100
+        : 0;
+
+      // Process transaction values by type
+      const transactionSummary = transactionValueByType.reduce(
+        (acc, curr) => {
+          acc.totalTransactionValue += curr.totalValue;
+          return acc;
+        },
+        { totalTransactionValue: 0 },
+      );
+
+      // Process top categories from transactions
+      const topCategories = await this.transactionModel.aggregate([
+        {
+          $match: {
+            transactionDate: { $gte: thirtyDaysAgo },
+          },
+        },
+        {
+          $lookup: {
+            from: 'inventoryitems',
+            let: { itemId: '$inventoryItem' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$_id', '$$itemId'] } } },
+              { $project: { category: 1 } },
+            ],
+            as: 'itemDetails',
+          },
+        },
+        {
+          $group: {
+            _id: { $arrayElemAt: ['$itemDetails.category', 0] },
+            transactionCount: { $sum: 1 },
+            totalQuantity: { $sum: '$quantity' },
+            totalValue: { $sum: { $ifNull: ['$totalValue', 0] } },
+          },
+        },
+        { $match: { _id: { $ne: null } } },
+        { $sort: { transactionCount: -1 } },
+        { $limit: 5 },
+        {
+          $project: {
+            _id: 0,
+            category: '$_id',
+            transactionCount: 1,
+            totalQuantity: 1,
+            totalValue: 1,
+          },
+        },
+      ] as any[]);
+
+      // Get recent stock alerts with more context
+      const recentAlerts = await this.inventoryModel.aggregate([
+        { $match: { isActive: true } },
+        { $unwind: '$stockLevels' },
+        {
+          $project: {
+            itemId: '$_id',
+            itemName: '$itemName',
+            itemCode: '$itemCode',
+            category: '$category',
+            currentStock: '$stockLevels.currentStock',
+            minimumLevel: '$stockLevels.minimumLevel',
+            maximumLevel: '$stockLevels.maximumLevel',
+            locationId: '$stockLevels.location',
+            standardCost: { $ifNull: ['$pricing.standardCost', 0] },
+            daysToStockout: {
+              $cond: [
+                { $gt: ['$stockLevels.currentStock', 0] },
+                {
+                  $divide: [
+                    '$stockLevels.currentStock',
+                    {
+                      $max: [{ $ifNull: ['$stockLevels.avgDailyUsage', 1] }, 1],
+                    },
+                  ],
+                },
+                0,
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'stocklocations',
+            let: { locId: '$locationId' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$_id', '$$locId'] } } },
+              { $project: { name: 1 } },
+            ],
+            as: 'locationDetails',
+          },
+        },
+        {
+          $project: {
+            itemId: 1,
+            itemName: 1,
+            itemCode: 1,
+            category: 1,
+            currentStock: 1,
+            minimumLevel: 1,
+            maximumLevel: 1,
+            standardCost: 1,
+            daysToStockout: 1,
+            location: { $arrayElemAt: ['$locationDetails.name', 0] },
+            alertType: {
+              $cond: [
+                { $eq: ['$currentStock', 0] },
+                'out_of_stock',
+                {
+                  $cond: [
+                    { $lte: ['$currentStock', '$minimumLevel'] },
+                    'low_stock',
+                    {
+                      $cond: [
+                        { $gte: ['$currentStock', '$maximumLevel'] },
+                        'overstock',
+                        'normal',
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            alertSeverity: {
+              $cond: [
+                { $eq: ['$currentStock', 0] },
+                'critical',
+                {
+                  $cond: [
+                    { $lte: ['$daysToStockout', 7] },
+                    'high',
+                    {
+                      $cond: [
+                        { $lte: ['$daysToStockout', 14] },
+                        'medium',
+                        'low',
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            estimatedValue: { $multiply: ['$currentStock', '$standardCost'] },
+          },
+        },
+        { $match: { alertType: { $ne: 'normal' } } },
+        { $sort: { alertSeverity: 1, currentStock: 1 } },
+        { $limit: 10 },
+      ] as any[]);
+
+      // Calculate inventory health score (0-100)
+      const totalItems = totalItemsResult || 0;
+      const inventoryHealthScore = totalItems
+        ? Math.round(((healthyStockCount || 0) / totalItems) * 100)
+        : 0;
+
+      // Normalize category percentages
+      if (stockDistributionByCategory.length > 0) {
+        const totalItems = stockDistributionByCategory.reduce(
+          (sum, cat) => sum + cat.itemCount,
+          0,
+        );
+        stockDistributionByCategory.forEach((cat) => {
+          cat.percentageOfTotal = Math.round(
+            (cat.itemCount / totalItems) * 100,
+          );
+        });
+      }
+
+      // Prepare inventory insights
+      const inventoryInsights = [];
+
+      // Add critical insights based on data
+      if (lowStockCount > 0) {
+        inventoryInsights.push({
+          type: 'warning',
+          message: `${lowStockCount} items are below minimum stock levels and need replenishment.`,
+        });
+      }
+
+      if (outOfStockCount > 0) {
+        inventoryInsights.push({
+          type: 'critical',
+          message: `${outOfStockCount} items are completely out of stock and require immediate attention.`,
+        });
+      }
+
+      if (overStockedCount > 0) {
+        inventoryInsights.push({
+          type: 'info',
+          message: `${overStockedCount} items are overstocked, consider optimizing inventory levels.`,
+        });
+      }
+
+      if (transactionGrowth > 20) {
+        inventoryInsights.push({
+          type: 'positive',
+          message: `Transaction volume increased by ${Math.round(transactionGrowth)}% compared to last month.`,
+        });
+      } else if (transactionGrowth < -10) {
+        inventoryInsights.push({
+          type: 'warning',
+          message: `Transaction volume decreased by ${Math.round(Math.abs(transactionGrowth))}% compared to last month.`,
+        });
+      }
+
+      if (highValueItems.length > 0) {
+        inventoryInsights.push({
+          type: 'info',
+          message: `${highValueItems.length} high-value items account for ${Math.round((highValueItems.reduce((sum, item) => sum + item.totalValue, 0) / totalInventoryValue) * 100)}% of total inventory value.`,
+        });
+      }
+
+      // Prepare the enhanced dashboard stats
+      const dashboardStats = {
+        // Basic metrics
+        totalItems: totalItemsResult,
+        totalValue: totalInventoryValue,
+        lowStockItems: lowStockCount,
+        outOfStockItems: outOfStockCount,
+        monthlyTransactions: currentMonthTransactions,
+
+        // Enhanced metrics
+        inventoryHealth: {
+          healthyStockItems: healthyStockCount,
+          lowStockItems: lowStockCount,
+          outOfStockItems: outOfStockCount,
+          overStockedItems: overStockedCount,
+          reservedStockItems: reservedStockCount,
+          inventoryHealthScore: inventoryHealthScore,
+        },
+
+        financialMetrics: {
+          totalInventoryValue: totalInventoryValue,
+          averageItemValue: avgItemValue,
+          highValueItems: highValueItems,
+          transactionValueByType: transactionValueByType,
+          totalTransactionValue: transactionSummary.totalTransactionValue,
+        },
+
+        transactionMetrics: {
+          currentMonthTransactions: currentMonthTransactions,
+          previousMonthTransactions: previousMonthTransactions,
+          transactionGrowth: transactionGrowth,
+          dailyTransactions:
+            monthlyTransactionsData[0]?.dailyTransactions || [],
+        },
+
+        inventoryDistribution: {
+          byCategory: stockDistributionByCategory,
+          byLocation: stockDistributionByLocation,
+        },
+
+        operationalInsights: {
+          // topSellingItems: topSellingItems,
+          // topTurnoverItems: inventoryTurnoverData,
+          inventoryInsights: inventoryInsights,
+        },
+
+        // Original metrics
+        topCategories: topCategories,
+        recentAlerts: recentAlerts,
+        recentTransactions: recentTransactions,
+      };
+
+      return {
+        success: true,
+        message: 'Dashboard statistics retrieved successfully',
+        data: dashboardStats,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error getting dashboard stats: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

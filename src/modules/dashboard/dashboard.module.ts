@@ -10,6 +10,12 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
 import { Subcontractor, SubcontractorSchema } from '../projects/project.schema';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import {
+  InventoryItem,
+  InventoryItemSchema,
+  InventoryTransaction,
+  InventoryTransactionSchema,
+} from '../inventory/inventory.schema';
 
 @Module({
   imports: [
@@ -19,6 +25,8 @@ import { DashboardService } from './dashboard.service';
       { name: ServiceOrder.name, schema: ServiceOrderSchema },
       { name: User.name, schema: UserSchema },
       { name: Subcontractor.name, schema: SubcontractorSchema },
+      { name: InventoryItem.name, schema: InventoryItemSchema },
+      { name: InventoryTransaction.name, schema: InventoryTransactionSchema },
     ]),
   ],
   controllers: [DashboardController],

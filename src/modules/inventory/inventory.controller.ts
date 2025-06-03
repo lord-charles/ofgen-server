@@ -545,7 +545,10 @@ export class InventoryController {
   }
 
   @Post('stock/reserved')
-  @ApiOperation({ summary: 'Update reserved stock for an inventory item at a specific location' })
+  @ApiOperation({
+    summary:
+      'Update reserved stock for an inventory item at a specific location',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Reserved stock updated successfully',
@@ -618,16 +621,5 @@ export class InventoryController {
   })
   generateValuationReport() {
     return this.inventoryService.getInventoryValuation();
-  }
-
-  @Get('dashboard')
-  @ApiOperation({ summary: 'Get inventory dashboard statistics' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Dashboard statistics retrieved successfully',
-    type: () => ApiResponseDto<DashboardStatsDto>,
-  })
-  getDashboardStats(): Promise<ApiResponseDto<DashboardStatsDto>> {
-    return this.inventoryService.getDashboardStats();
   }
 }
