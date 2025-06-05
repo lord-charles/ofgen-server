@@ -23,16 +23,13 @@ export class NotificationService {
 
   async sendSMS(phoneNumber: string, message: string): Promise<boolean> {
     try {
-      const response = await axios.post(
-        process.env.SMS_API_URL,
-        {
-          apikey: process.env.SMS_API_KEY,
-          partnerID: process.env.SMS_PARTNER_ID,
-          message: message,
-          shortcode: process.env.SMS_SHORTCODE,
-          mobile: phoneNumber,
-        },
-      );
+      const response = await axios.post(process.env.SMS_API_URL, {
+        apikey: process.env.SMS_API_KEY,
+        partnerID: process.env.SMS_PARTNER_ID,
+        message: message,
+        shortcode: process.env.SMS_SHORTCODE,
+        mobile: phoneNumber,
+      });
 
       if (response.status === 200) {
         this.logger.log(`SMS sent successfully to ${phoneNumber}`);
@@ -49,15 +46,19 @@ export class NotificationService {
     }
   }
 
-  async sendRegistrationPassword(phoneNumber: string, email: string, message: string): Promise<boolean> {
+  async sendRegistrationPassword(
+    phoneNumber: string,
+    email: string,
+    message: string,
+  ): Promise<boolean> {
     try {
       if (phoneNumber) {
-        return await this.sendSMS(phoneNumber, message);
+        await this.sendSMS(phoneNumber, message);
       }
       if (email) {
-        return await this.sendEmail(email, 'Ofgen: Password Reset', message);
+        await this.sendEmail(email, 'Ofgen: Password Reset', message);
       }
-      return false;
+      return true;
     } catch (error) {
       this.logger.error(
         `Error sending registration password: ${error.message}`,
@@ -151,7 +152,9 @@ export class NotificationService {
       );
       return true;
     } catch (error) {
-      this.logger.error(`Error sending email with attachments to ${to}: ${error.message}`);
+      this.logger.error(
+        `Error sending email with attachments to ${to}: ${error.message}`,
+      );
       if (error.code === 'ECONNECTION' || error.code === 'EAUTH') {
         this.logger.error(
           'SMTP connection or authentication error. Please check your SMTP settings.',

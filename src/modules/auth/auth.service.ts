@@ -9,7 +9,10 @@ import * as bcrypt from 'bcrypt';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/user.dto';
 import { LoginUserDto } from './dto/login.dto';
-import { RequestPasswordResetDto, ConfirmPasswordResetDto } from './dto/reset-password.dto';
+import {
+  RequestPasswordResetDto,
+  ConfirmPasswordResetDto,
+} from './dto/reset-password.dto';
 import {
   JwtPayload,
   AuthResponse,
@@ -30,9 +33,7 @@ export class AuthService {
     private readonly systemLogsService: SystemLogsService,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
-  ) {
-
-  }
+  ) {}
 
   async register(
     createUserDto: CreateUserDto,
@@ -86,7 +87,9 @@ export class AuthService {
           undefined,
           req,
         );
-        throw new UnauthorizedException('Ofgen: Invalid credentials or user not found.');
+        throw new UnauthorizedException(
+          'Ofgen: Invalid credentials or user not found.',
+        );
       }
 
       if (user.status !== 'active') {
@@ -110,7 +113,10 @@ export class AuthService {
         );
         throw new UnauthorizedException('Ofgen: Authentication process error.');
       }
-      const isValidPassword = await bcrypt.compare(loginUserDto.password, user.password);
+      const isValidPassword = await bcrypt.compare(
+        loginUserDto.password,
+        user.password,
+      );
       if (!isValidPassword) {
         await this.systemLogsService.createLog(
           'Ofgen Invalid Password',
@@ -155,7 +161,9 @@ export class AuthService {
     req?: Request,
   ): Promise<{ message: string }> {
     try {
-      const user = await this.userService.findByEmail(requestPasswordResetDto.email);
+      const user = await this.userService.findByEmail(
+        requestPasswordResetDto.email,
+      );
       if (!user) {
         await this.systemLogsService.createLog(
           'Ofgen Password Reset Request Failed',
@@ -164,10 +172,13 @@ export class AuthService {
           undefined,
           req,
         );
-        return { message: 'Ofgen: If your email is registered, you will receive a password reset PIN.' };
+        return {
+          message:
+            'Ofgen: If your email is registered, you will receive a password reset PIN.',
+        };
       }
 
-      const resetPin = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit PIN
+      const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
       const expiryDate = new Date(Date.now() + 10 * 60 * 1000); // PIN expires in 10 minutes
 
       user.resetPasswordPin = resetPin;
@@ -178,7 +189,7 @@ export class AuthService {
       await this.notificationService.sendRegistrationPassword(
         user.phoneNumber,
         user.email,
-        resetMessage
+        resetMessage,
       );
 
       await this.systemLogsService.createLog(
@@ -189,7 +200,10 @@ export class AuthService {
         req,
       );
 
-      return { message: 'Ofgen: If your email is registered, you will receive a password reset PIN.' };
+      return {
+        message:
+          'Ofgen: If your email is registered, you will receive a password reset PIN.',
+      };
     } catch (error) {
       await this.systemLogsService.createLog(
         'Ofgen Password Reset Request Error',
@@ -198,7 +212,9 @@ export class AuthService {
         undefined,
         req,
       );
-      throw new BadRequestException('Ofgen: Could not process password reset request. Please try again later.');
+      throw new BadRequestException(
+        'Ofgen: Could not process password reset request. Please try again later.',
+      );
     }
   }
 
@@ -207,10 +223,15 @@ export class AuthService {
     req?: Request,
   ): Promise<{ message: string }> {
     try {
-      const user = await this.userService.findByEmail(confirmPasswordResetDto.email, true);
+      const user = await this.userService.findByEmail(
+        confirmPasswordResetDto.email,
+        true,
+      );
 
       if (!user || !user.resetPasswordPin || !user.resetPasswordExpires) {
-        throw new BadRequestException('Ofgen: Invalid or expired password reset PIN.');
+        throw new BadRequestException(
+          'Ofgen: Invalid or expired password reset PIN.',
+        );
       }
 
       if (user.resetPasswordExpires < new Date()) {
@@ -251,7 +272,9 @@ export class AuthService {
         req,
       );
       if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException('Ofgen: Could not reset password. Please try again.');
+      throw new BadRequestException(
+        'Ofgen: Could not reset password. Please try again.',
+      );
     }
   }
 
@@ -273,15 +296,19 @@ export class AuthService {
     };
   }
 
-
-
   /**
    * Remove sensitive information from user object
    */
   sanitizeUser(user: User | UserDocument): Partial<User> {
     const userObj = 'toObject' in user ? user.toObject() : user;
     // Ensure all sensitive fields are excluded
-    const { password, pin, resetPasswordPin, resetPasswordExpires, ...sanitizedUser } = userObj as any;
+    const {
+      password,
+      pin,
+      resetPasswordPin,
+      resetPasswordExpires,
+      ...sanitizedUser
+    } = userObj as any;
     return sanitizedUser;
   }
 
