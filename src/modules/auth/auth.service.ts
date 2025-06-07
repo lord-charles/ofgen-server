@@ -179,7 +179,7 @@ export class AuthService {
       }
 
       const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiryDate = new Date(Date.now() + 10 * 60 * 1000); // PIN expires in 10 minutes
+      const expiryDate = new Date(Date.now() + 10 * 60 * 1000);
 
       user.resetPasswordPin = resetPin;
       user.resetPasswordExpires = expiryDate;
