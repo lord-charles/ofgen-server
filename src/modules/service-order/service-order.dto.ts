@@ -191,12 +191,14 @@ export class CreateServiceOrderDto {
         specs: '100AH',
         unitOfMeasure: 'Pcs',
         quantity: 7,
+        bomType: 'Equipment',
       },
       {
         item: 'Rectifier Capacity',
         specs: '36kw',
         unitOfMeasure: 'Pcs',
         quantity: 1,
+        bomType: 'Equipment',
       },
     ],
   })

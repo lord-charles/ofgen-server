@@ -1,15 +1,35 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { HttpStatus } from '@nestjs/common';
 import { ServiceOrderService } from './service-order.service';
 import { ServiceOrder } from './service-order.schema';
-import { CreateBillOfMaterialsItemDto, CreateServiceOrderDto, UpdateServiceOrderDto } from './service-order.dto';
+import {
+  CreateBillOfMaterialsItemDto,
+  CreateServiceOrderDto,
+  UpdateServiceOrderDto,
+} from './service-order.dto';
 
 @ApiTags('Service Orders')
 @ApiBearerAuth()
 @Controller('service-orders')
 export class ServiceOrderController {
-  constructor(private readonly serviceOrderService: ServiceOrderService) { }
+  constructor(private readonly serviceOrderService: ServiceOrderService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new service order' })
@@ -23,20 +43,53 @@ export class ServiceOrderController {
     description: 'Invalid input data',
   })
   async create(@Body() createServiceOrderDto: CreateServiceOrderDto) {
+    console.log(createServiceOrderDto);
     return this.serviceOrderService.create(createServiceOrderDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all service orders with filtering' })
-  @ApiQuery({ name: 'status', required: false, description: 'Filter by status' })
-  @ApiQuery({ name: 'issuedBy', required: false, description: 'Filter by issuer' })
-  @ApiQuery({ name: 'issuedTo', required: false, description: 'Filter by recipient' })
-  @ApiQuery({ name: 'region', required: false, description: 'Filter by region' })
-  @ApiQuery({ name: 'siteId', required: false, description: 'Filter by site ID' })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Filter by start date' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'Filter by end date' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status',
+  })
+  @ApiQuery({
+    name: 'issuedBy',
+    required: false,
+    description: 'Filter by issuer',
+  })
+  @ApiQuery({
+    name: 'issuedTo',
+    required: false,
+    description: 'Filter by recipient',
+  })
+  @ApiQuery({
+    name: 'region',
+    required: false,
+    description: 'Filter by region',
+  })
+  @ApiQuery({
+    name: 'siteId',
+    required: false,
+    description: 'Filter by site ID',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'Filter by start date',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Filter by end date',
+  })
   @ApiQuery({ name: 'limit', required: false, description: 'Limit results' })
-  @ApiQuery({ name: 'offset', required: false, description: 'Offset for pagination' })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    description: 'Offset for pagination',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of service orders',
@@ -107,6 +160,8 @@ export class ServiceOrderController {
     @Param('id') id: string,
     @Body() updateServiceOrderDto: UpdateServiceOrderDto,
   ) {
+    console.log(updateServiceOrderDto);
+
     return this.serviceOrderService.update(id, updateServiceOrderDto);
   }
 
@@ -166,4 +221,3 @@ export class ServiceOrderController {
     return this.serviceOrderService.remove(id);
   }
 }
-
