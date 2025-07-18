@@ -233,14 +233,14 @@ export class InventoryService {
   async createInventoryItem(createItemDto: CreateInventoryItemDto) {
     try {
       // Check if item code already exists
-      const existingItem = await this.inventoryModel.findOne({
-        itemCode: createItemDto.itemCode,
-      });
-      if (existingItem) {
-        throw new ConflictException(
-          `Item with code ${createItemDto.itemCode} already exists`,
-        );
-      }
+      // const existingItem = await this.inventoryModel.findOne({
+      //   itemCode: createItemDto.itemCode,
+      // });
+      // if (existingItem) {
+      //   throw new ConflictException(
+      //     `Item with code ${createItemDto.itemCode} already exists`,
+      //   );
+      // }
 
       // Validate locations exist
       const locationIds = createItemDto.stockLevels.map((sl) => sl.location);

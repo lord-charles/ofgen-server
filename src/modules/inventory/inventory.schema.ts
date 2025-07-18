@@ -434,8 +434,8 @@ export class InventoryItem {
   @IsString()
   itemName: string;
 
-  @ApiProperty({ description: 'Unique item code/SKU' })
-  @Prop({ required: true, unique: true, trim: true })
+  @ApiProperty({ description: 'Item code/SKU' })
+  @Prop()
   @IsString()
   itemCode: string;
 
@@ -790,7 +790,7 @@ InventoryItemSchema.pre('save', function () {
     // Ensure availableStock is never negative
     level.availableStock = Math.max(
       0,
-      level.currentStock - level.reservedStock
+      level.currentStock - level.reservedStock,
     );
   });
 });
