@@ -87,6 +87,10 @@ export class BillOfMaterialsItem {
   @Prop({ min: 0 })
   sellingRate?: number;
 
+  @ApiProperty({ description: 'BOM type' })
+  @Prop()
+  bomType: 'Equipment' | 'Service';
+
   @ApiPropertyOptional({ description: 'Total cost' })
   @Prop({ min: 0 })
   total?: number;
