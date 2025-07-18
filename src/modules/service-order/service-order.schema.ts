@@ -21,7 +21,6 @@ export class ContactInfo {
   @ApiProperty({ description: 'Physical address' })
   @Prop({ required: true })
   physicalAddress: string;
-
 }
 
 @Schema()
@@ -38,8 +37,8 @@ export class LocationInfo {
   @Prop({
     type: {
       latitude: { type: Number, required: true },
-      longitude: { type: Number, required: true }
-    }
+      longitude: { type: Number, required: true },
+    },
   })
   coordinates: {
     latitude: number;
@@ -69,11 +68,11 @@ export class BillOfMaterialsItem {
   item: string;
 
   @ApiProperty({ description: 'Specifications/Capacity' })
-  @Prop({ required: true })
+  @Prop()
   specs: string;
 
   @ApiProperty({ description: 'Unit of measure' })
-  @Prop({ required: true })
+  @Prop()
   unitOfMeasure: string;
 
   @ApiProperty({ description: 'Quantity' })
@@ -83,6 +82,10 @@ export class BillOfMaterialsItem {
   @ApiPropertyOptional({ description: 'Rate/Price per unit' })
   @Prop({ min: 0 })
   rate?: number;
+
+  @ApiPropertyOptional({ description: 'Selling rate/price per unit' })
+  @Prop({ min: 0 })
+  sellingRate?: number;
 
   @ApiPropertyOptional({ description: 'Total cost' })
   @Prop({ min: 0 })
@@ -122,17 +125,17 @@ export class ServiceOrder {
   @ApiProperty({
     description: 'Dynamic design summary fields',
     type: 'object',
-    additionalProperties: true
+    additionalProperties: true,
   })
   @Prop({
     type: MongooseSchema.Types.Mixed,
-    default: {}
+    default: {},
   })
   designSummary: Record<string, any>;
 
   @ApiProperty({
     description: 'Bill of materials items',
-    type: [BillOfMaterialsItem]
+    type: [BillOfMaterialsItem],
   })
   @Prop({ type: [BillOfMaterialsItem], default: [] })
   billOfMaterials: BillOfMaterialsItem[];
@@ -140,7 +143,7 @@ export class ServiceOrder {
   @ApiPropertyOptional({ description: 'Order status' })
   @Prop({
     enum: ['draft', 'pending', 'approved', 'rejected', 'completed'],
-    default: 'draft'
+    default: 'draft',
   })
   status?: string;
 
@@ -157,8 +160,8 @@ export class ServiceOrder {
     type: {
       approvedBy: String,
       approvedDate: Date,
-      approvalComments: String
-    }
+      approvalComments: String,
+    },
   })
   approval?: {
     approvedBy: string;
@@ -179,8 +182,3 @@ ServiceOrderSchema.index({ 'siteDetails.siteId': 1 });
 ServiceOrderSchema.index({ status: 1 });
 ServiceOrderSchema.index({ serviceOrderDate: -1 });
 ServiceOrderSchema.index({ issuedBy: 1, issuedTo: 1 });
-
-
-
-
-
