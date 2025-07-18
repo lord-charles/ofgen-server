@@ -1,5 +1,14 @@
-
-import { IsString, IsOptional, IsObject, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsObject,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsNumber,
+  Min,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -31,11 +40,11 @@ export class CreateLocationInfoDto {
   subRegion: string;
 
   @ApiProperty({
-    example: { latitude: -0.812790, longitude: 36.390840 },
+    example: { latitude: -0.81279, longitude: 36.39084 },
     type: 'object',
     properties: {
-      latitude: { type: 'number', example: -0.812790 },
-      longitude: { type: 'number', example: 36.390840 },
+      latitude: { type: 'number', example: -0.81279 },
+      longitude: { type: 'number', example: 36.39084 },
     },
     additionalProperties: false,
   })
@@ -66,6 +75,10 @@ export class CreateBillOfMaterialsItemDto {
   @ApiProperty({ example: 'Li Battery Capacity (Ah)' })
   @IsString()
   item: string;
+
+  @ApiProperty({ example: 'Equipment' })
+  @IsString()
+  bomType: 'Equipment' | 'Service';
 
   @ApiProperty({ example: '100AH' })
   @IsString()
@@ -112,34 +125,37 @@ export class CreateServiceOrderDto {
   serviceOrderDate: string;
 
   @ApiProperty({
-    type: CreateContactInfoDto, example: {
+    type: CreateContactInfoDto,
+    example: {
       name: 'Cyrus Kamau Wanyoike',
       telephone: '0722218127',
       email: 'CWanyoike1@Safaricom.co.ke',
       physicalAddress: 'SAFARICOM HQ III',
-    }
+    },
   })
   @ValidateNested()
   @Type(() => CreateContactInfoDto)
   contactInfo: CreateContactInfoDto;
 
   @ApiProperty({
-    type: CreateLocationInfoDto, example: {
+    type: CreateLocationInfoDto,
+    example: {
       region: 'RIFT VALLEY',
       subRegion: 'NAKURU',
-      coordinates: { latitude: -0.812790, longitude: 36.390840 },
-    }
+      coordinates: { latitude: -0.81279, longitude: 36.39084 },
+    },
   })
   @ValidateNested()
   @Type(() => CreateLocationInfoDto)
   locationInfo: CreateLocationInfoDto;
 
   @ApiProperty({
-    type: CreateSiteDetailsDto, example: {
+    type: CreateSiteDetailsDto,
+    example: {
       siteId: '13632_RV_NO1029-Longonot_Farm_OUTN_MGF',
       siteType: 'Green Field',
       siteClassification: 'Last Mile',
-    }
+    },
   })
   @ValidateNested()
   @Type(() => CreateSiteDetailsDto)
@@ -158,7 +174,8 @@ export class CreateServiceOrderDto {
       proposedRectifierCapacity: '36Kw (Huawei ICC330 H1-C12)',
       estimatedSolarProductionPerMonth: '1,059.3 kWH',
       solarPenetration: '48%',
-      generatorComment: 'Generator recovery due to the achievement of the 8hr B.H.T',
+      generatorComment:
+        'Generator recovery due to the achievement of the 8hr B.H.T',
       dabApprovalComments: '',
     },
   })
@@ -167,7 +184,8 @@ export class CreateServiceOrderDto {
   designSummary?: Record<string, any>;
 
   @ApiPropertyOptional({
-    type: [CreateBillOfMaterialsItemDto], example: [
+    type: [CreateBillOfMaterialsItemDto],
+    example: [
       {
         item: 'Li Battery Capacity (Ah)',
         specs: '100AH',
@@ -180,7 +198,7 @@ export class CreateServiceOrderDto {
         unitOfMeasure: 'Pcs',
         quantity: 1,
       },
-    ]
+    ],
   })
   @IsOptional()
   @IsArray()
@@ -214,7 +232,7 @@ export class UpdateServiceOrderDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()
-  serviceOrderDate?: string
+  serviceOrderDate?: string;
 
   @ApiPropertyOptional({ type: CreateContactInfoDto })
   @IsOptional()
@@ -237,7 +255,7 @@ export class UpdateServiceOrderDto {
   @ApiPropertyOptional({
     description: 'Dynamic design summary fields',
     type: 'object',
-    additionalProperties: true
+    additionalProperties: true,
   })
   @IsOptional()
   @IsObject()
