@@ -1412,6 +1412,19 @@ export class DashboardStatsDto {
   }>;
 }
 
+// ========================= BULK OPERATIONS =========================
+
+export class BulkDeleteInventoryItemsDto {
+  @ApiProperty({
+    description: 'Array of inventory item MongoDB ObjectIds to delete',
+    example: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsMongoId({ each: true })
+  itemIds: string[];
+}
+
 // ========================= RESERVED STOCK MANAGEMENT =========================
 
 export enum ReservedStockAction {

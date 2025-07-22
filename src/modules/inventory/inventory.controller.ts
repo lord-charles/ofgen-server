@@ -43,6 +43,7 @@ import {
   DashboardStatsDto,
   ReservedStockUpdateDto,
   ReservedStockAction,
+  BulkDeleteInventoryItemsDto,
 } from './inventory.dto';
 import { TransactionType } from './inventory.schema';
 
@@ -231,6 +232,27 @@ export class InventoryController {
   })
   deleteInventoryItem(@Param('id') id: string): Promise<ApiResponseDto<void>> {
     return this.inventoryService.deleteInventoryItem(id);
+  }
+
+  @Post('items/bulk-delete')
+  @ApiOperation({ summary: 'Delete multiple inventory items in bulk' })
+  @ApiBody({ type: BulkDeleteInventoryItemsDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Inventory items deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'No matching items found for the provided IDs',
+  })
+  async bulkDeleteInventoryItems(
+    @Body() bulkDeleteDto: BulkDeleteInventoryItemsDto,
+  ): Promise<ApiResponseDto<{ deletedCount: number }>> {
+    return this.inventoryService.bulkDelete(bulkDeleteDto.itemIds);
   }
 
   // ========================= TRANSACTION ENDPOINTS =========================

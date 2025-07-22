@@ -510,6 +510,37 @@ export class InventoryService {
     }
   }
 
+  async bulkDelete(itemIds: string[]): Promise<ApiResponseDto<{ deletedCount: number }>> {
+    if (!itemIds || itemIds.length === 0) {
+      throw new BadRequestException('No item IDs provided for bulk deletion.');
+    }
+
+    try {
+      const result = await this.inventoryModel.deleteMany({
+        _id: { $in: itemIds.map(id => new Types.ObjectId(id)) },
+      });
+
+      if (result.deletedCount === 0) {
+        throw new NotFoundException(
+          'No matching items found for the provided IDs.',
+        );
+      }
+
+      return {
+        success: true,
+        message: `${result.deletedCount} item(s) deleted successfully.`,
+        data: { deletedCount: result.deletedCount },
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error during bulk deletion: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
   // ========================= TRANSACTION OPERATIONS =========================
 
   /**
