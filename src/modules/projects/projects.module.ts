@@ -1,11 +1,23 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Project, ProjectSchema, Subcontractor, SubcontractorSchema, MilestoneSchema, TaskSchema, RiskItemSchema, Task, Milestone, RiskItem } from './project.schema';
+import {
+  Project,
+  ProjectSchema,
+  Subcontractor,
+  SubcontractorSchema,
+  MilestoneSchema,
+  TaskSchema,
+  RiskItemSchema,
+  Task,
+  Milestone,
+  RiskItem,
+} from './project.schema';
 import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
 import { SubcontractorService } from './subcontractor.service';
 import { SubcontractorController } from './subcontractor.controller';
 import { LocationsModule } from '../locations/locations.module';
+import { ProjectSyncService } from './project-sync.service';
 
 @Module({
   imports: [
@@ -18,8 +30,8 @@ import { LocationsModule } from '../locations/locations.module';
     ]),
     LocationsModule,
   ],
-  providers: [ProjectService, SubcontractorService],
+  providers: [ProjectService, SubcontractorService, ProjectSyncService],
   controllers: [ProjectController, SubcontractorController],
   exports: [ProjectService, SubcontractorService],
 })
-export class ProjectsModule { }
+export class ProjectsModule {}

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { InventoryService } from './inventory.service';
 import { InventoryController } from './inventory.controller';
+import { InventoryCronService } from './inventory-cron.service';
 import {
   InventoryItem,
   InventoryItemSchema,
@@ -23,7 +24,7 @@ import {
     ]),
   ],
   controllers: [InventoryController],
-  providers: [InventoryService],
+  providers: [InventoryService, InventoryCronService],
   exports: [InventoryService],
 })
 export class InventoryModule {}

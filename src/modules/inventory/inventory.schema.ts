@@ -762,8 +762,18 @@ InventoryItemSchema.virtual('totalAvailable').get(function () {
   );
 });
 
-// Middleware to update stock status based on levels
-InventoryItemSchema.pre('save', function () {
+// Middleware to calculate available stock, total stock, and update status
+InventoryItemSchema.pre('save', function (next) {
+  // 1. Update available stock for each location
+  this.stockLevels?.forEach((level) => {
+    level.reservedStock = level.reservedStock || 0;
+    level.availableStock = Math.max(
+      0,
+      level.currentStock - level.reservedStock,
+    );
+  });
+
+  // 2. Calculate total stock and determine the new status
   const totalStock =
     this.stockLevels?.reduce((total, level) => total + level.currentStock, 0) ||
     0;
@@ -773,24 +783,14 @@ InventoryItemSchema.pre('save', function () {
 
   if (totalStock === 0) {
     this.stockStatus = StockStatus.OUT_OF_STOCK;
-  } else if (totalStock <= minLevel) {
+  } else if (totalStock > 0 && totalStock <= minLevel) {
     this.stockStatus = StockStatus.LOW_STOCK;
   } else {
     this.stockStatus = StockStatus.IN_STOCK;
   }
 
+  // 3. Update the last modified date
   this.lastModified = new Date();
-});
 
-// Update available stock calculation
-InventoryItemSchema.pre('save', function () {
-  this.stockLevels?.forEach((level) => {
-    // Ensure reservedStock is not null/undefined
-    level.reservedStock = level.reservedStock || 0;
-    // Ensure availableStock is never negative
-    level.availableStock = Math.max(
-      0,
-      level.currentStock - level.reservedStock,
-    );
-  });
+  next();
 });

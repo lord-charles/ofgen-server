@@ -294,8 +294,6 @@ export class InventoryService {
         stockStatus,
         supplier,
         isActive = true,
-        page = 1,
-        limit = 20,
         sortBy = 'createdAt',
         sortOrder = 'desc',
       } = query;
@@ -320,19 +318,12 @@ export class InventoryService {
         filter.supplier = { $regex: supplier, $options: 'i' };
       }
 
-      // Calculate pagination
-      const skip = (page - 1) * limit;
-      const sortOptions: any = {};
-      sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
-
       // Execute query with population
       const [items, total] = await Promise.all([
         this.inventoryModel
           .find(filter)
           .populate('stockLevels.location', 'name address city')
-          .sort(sortOptions)
-          .skip(skip)
-          .limit(limit)
+          .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
           .lean(),
         this.inventoryModel.countDocuments(filter),
       ]);
@@ -352,16 +343,9 @@ export class InventoryService {
         );
       }
 
-      const totalPages = Math.ceil(total / limit);
-
       return {
         data: filteredItems,
         total,
-        page,
-        limit,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
       };
     } catch (error) {
       this.logger.error(
