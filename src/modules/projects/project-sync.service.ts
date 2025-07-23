@@ -14,7 +14,7 @@ export class ProjectSyncService {
   ) {}
 
   // Runs every hour
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async syncProjectProgressWithMilestones() {
     this.logger.log('Starting project progress sync job...');
     const projects = await this.projectModel
