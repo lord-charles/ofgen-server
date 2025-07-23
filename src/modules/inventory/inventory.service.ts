@@ -515,9 +515,15 @@ export class InventoryService {
       throw new BadRequestException('No item IDs provided for bulk deletion.');
     }
 
+    // Filter out invalid ObjectId strings
+    const validIds = itemIds.filter(id => Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      throw new BadRequestException('No valid item IDs provided for bulk deletion.');
+    }
+
     try {
       const result = await this.inventoryModel.deleteMany({
-        _id: { $in: itemIds.map(id => new Types.ObjectId(id)) },
+        _id: { $in: validIds.map(id => new Types.ObjectId(id)) },
       });
 
       if (result.deletedCount === 0) {
