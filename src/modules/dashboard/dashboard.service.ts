@@ -186,7 +186,7 @@ export class DashboardService {
       .find()
       .populate('location', 'name')
       .populate('projectLeader', 'firstName lastName')
-      .populate('issuedBy')
+      // .populate('issuedBy')
       .sort({ updatedAt: -1 })
       .limit(10)
       .lean();
