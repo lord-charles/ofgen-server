@@ -124,7 +124,7 @@ export class ProjectService {
     const updated = await this.projectModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .populate('location')
-      .populate('serviceOrder')
+      // .populate('serviceOrder')
       .populate('projectLeader')
       .populate('subcontractors')
       .exec();
