@@ -27,7 +27,6 @@ export class ProjectService {
     const projectData: any = {
       ...createDto,
       location: new Types.ObjectId(createDto.location),
-      // serviceOrder: new Types.ObjectId(createDto.serviceOrder),
     };
 
     // Handle optional ObjectId fields

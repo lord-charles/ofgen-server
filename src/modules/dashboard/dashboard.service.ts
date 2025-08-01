@@ -84,7 +84,6 @@ export class DashboardService {
    * @returns Overview statistics
    */
   private async getOverviewData(): Promise<OverviewDto> {
-    // Get project counts by status
     const projectCounts = await this.projectModel.aggregate([
       {
         $group: {
@@ -145,7 +144,7 @@ export class DashboardService {
           duration: {
             $divide: [
               { $subtract: ['$actualCompletionDate', '$actualStartDate'] },
-              1000 * 60 * 60 * 24, // Convert ms to days
+              1000 * 60 * 60 * 24,
             ],
           },
         },
@@ -156,9 +155,7 @@ export class DashboardService {
     const avgProjectDuration =
       completedProjectsDuration.length > 0
         ? Math.round(completedProjectsDuration[0].avgDuration)
-        : 45; // Default to 45 if no data
-
-    // For demo purposes, hardcode some metrics that would typically come from other systems
+        : 45;
     const monthlyRevenue = 8500000;
     const clientSatisfaction = 4.8;
     const profitMargin = 18.5;
@@ -189,7 +186,7 @@ export class DashboardService {
       .find()
       .populate('location', 'name')
       .populate('projectLeader', 'firstName lastName')
-      .populate('serviceOrder', 'issuedBy')
+      .populate('issuedBy')
       .sort({ updatedAt: -1 })
       .limit(10)
       .lean();
@@ -201,14 +198,11 @@ export class DashboardService {
         project.milestones?.filter((milestone) => milestone.progress === 100)
           .length || 0;
 
-      // Calculate team size (subcontractors + leader)
       const team =
         (project.subcontractors?.length || 0) + (project.projectLeader ? 1 : 0);
 
-      // Cast the populated fields to their respective types for proper property access
       const locationObj = project.location as any;
       const leaderObj = project.projectLeader as any;
-      // const serviceOrderObj = project.serviceOrder as any;
 
       return {
         id: project._id.toString(),
@@ -435,10 +429,6 @@ export class DashboardService {
    * @returns Financial data
    */
   private async getFinancialsData(): Promise<FinancialsDto> {
-    // For the demo, we'll return hardcoded financial data
-    // In a real implementation, this would be calculated from financial records
-
-    // Monthly revenue data
     const monthlyRevenue: MonthlyRevenueDto[] = [
       { month: 'Jan', revenue: 6500000, target: 7000000 },
       { month: 'Feb', revenue: 7200000, target: 7000000 },
@@ -476,7 +466,6 @@ export class DashboardService {
    * @returns Region name
    */
   private getRegionFromCounty(county: string): string {
-    // Simple mapping of counties to regions
     const countyToRegion = {
       Nairobi: 'Central',
       Mombasa: 'Coast',
@@ -497,7 +486,6 @@ export class DashboardService {
    * @returns Location name
    */
   private extractLocation(address: string): string {
-    // Simple extraction of the first part of the address as the location
     const parts = address.split(',');
     if (parts.length > 0) {
       return parts[parts.length - 1].trim();
@@ -507,7 +495,6 @@ export class DashboardService {
 
   async getDashboardStats() {
     try {
-      // Get current date and calculate date ranges for various metrics
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const startOfPrevMonth = new Date(
