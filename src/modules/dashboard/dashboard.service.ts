@@ -208,7 +208,7 @@ export class DashboardService {
       // Cast the populated fields to their respective types for proper property access
       const locationObj = project.location as any;
       const leaderObj = project.projectLeader as any;
-      const serviceOrderObj = project.serviceOrder as any;
+      // const serviceOrderObj = project.serviceOrder as any;
 
       return {
         id: project._id.toString(),
@@ -225,7 +225,9 @@ export class DashboardService {
         projectLeader: leaderObj
           ? `${leaderObj.firstName} ${leaderObj.lastName}`
           : 'Unassigned',
-        client: serviceOrderObj?.issuedBy || 'Unknown',
+        // client: serviceOrderObj?.issuedBy || 'Unknown',
+        client: 'Unknown',
+
         capacity: project.capacity || 'N/A',
         type: project.projectType || 'N/A',
         milestones,
