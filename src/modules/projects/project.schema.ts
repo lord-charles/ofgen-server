@@ -1,7 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsNumber, IsDate, IsArray, Min, Max, IsBoolean } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsDate,
+  IsArray,
+  Min,
+  Max,
+  IsBoolean,
+} from 'class-validator';
 
 export type ProjectDocument = Project & Document;
 export type SubcontractorDocument = Subcontractor & Document;
@@ -14,7 +24,7 @@ export enum ProjectStatus {
   IN_PROGRESS = 'In Progress',
   ON_HOLD = 'On Hold',
   COMPLETED = 'Completed',
-  CANCELLED = 'Cancelled'
+  CANCELLED = 'Cancelled',
 }
 
 export enum TaskStatus {
@@ -22,21 +32,21 @@ export enum TaskStatus {
   IN_PROGRESS = 'In Progress',
   COMPLETED = 'Completed',
   BLOCKED = 'Blocked',
-  CANCELLED = 'Cancelled'
+  CANCELLED = 'Cancelled',
 }
 
 export enum TaskPriority {
   LOW = 'Low',
   MEDIUM = 'Medium',
   HIGH = 'High',
-  CRITICAL = 'Critical'
+  CRITICAL = 'Critical',
 }
 
 export enum RiskSeverity {
   LOW = 'Low',
   MEDIUM = 'Medium',
   HIGH = 'High',
-  CRITICAL = 'Critical'
+  CRITICAL = 'Critical',
 }
 
 export enum SubcontractorSpecialty {
@@ -46,7 +56,7 @@ export enum SubcontractorSpecialty {
   MECHANICAL = 'Mechanical Installation',
   SECURITY = 'Security Systems',
   GENERAL = 'General Construction',
-  TRANSPORT = 'Transportation & Logistics'
+  TRANSPORT = 'Transportation & Logistics',
 }
 
 // ========================= SUBCONTRACTOR SCHEMA =========================
@@ -59,7 +69,10 @@ export class Subcontractor {
   @IsBoolean()
   isCompany: boolean;
 
-  @ApiProperty({ description: 'Email address', example: 'info@nairobielec.co.ke' })
+  @ApiProperty({
+    description: 'Email address',
+    example: 'info@nairobielec.co.ke',
+  })
   @Prop({ lowercase: true, trim: true })
   @IsString()
   @IsOptional()
@@ -71,64 +84,95 @@ export class Subcontractor {
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ description: 'Physical address', example: 'Kimathi Street, Nairobi CBD' })
+  @ApiProperty({
+    description: 'Physical address',
+    example: 'Kimathi Street, Nairobi CBD',
+  })
   @Prop({ trim: true })
   @IsOptional()
   @IsString()
   address?: string;
 
   // Company-specific fields
-  @ApiProperty({ description: 'Company name (when isCompany=true)', example: 'Nairobi Electrical Solutions Ltd' })
+  @ApiProperty({
+    description: 'Company name (when isCompany=true)',
+    example: 'Nairobi Electrical Solutions Ltd',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   companyName?: string;
 
-  @ApiProperty({ description: 'Company registration number (when isCompany=true)', example: 'KE-C-123456' })
+  @ApiProperty({
+    description: 'Company registration number (when isCompany=true)',
+    example: 'KE-C-123456',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   registrationNumber?: string;
 
-  @ApiProperty({ description: 'KRA PIN (when isCompany=true)', example: 'A123456789B' })
+  @ApiProperty({
+    description: 'KRA PIN (when isCompany=true)',
+    example: 'A123456789B',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   taxPin?: string;
 
-  @ApiProperty({ description: 'Primary contact person name (when isCompany=true)', example: 'John Kamau' })
+  @ApiProperty({
+    description: 'Primary contact person name (when isCompany=true)',
+    example: 'John Kamau',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   contactPerson?: string;
 
   // Individual-specific fields
-  @ApiProperty({ description: 'First name (when isCompany=false)', example: 'John' })
+  @ApiProperty({
+    description: 'First name (when isCompany=false)',
+    example: 'John',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   firstName?: string;
 
-  @ApiProperty({ description: 'Last name (when isCompany=false)', example: 'Kamau' })
+  @ApiProperty({
+    description: 'Last name (when isCompany=false)',
+    example: 'Kamau',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   lastName?: string;
 
-  @ApiProperty({ description: 'National ID number (when isCompany=false)', example: '12345678' })
+  @ApiProperty({
+    description: 'National ID number (when isCompany=false)',
+    example: '12345678',
+  })
   @Prop({ trim: true })
   @IsString()
   @IsOptional()
   nationalId?: string;
 
   // Specialty and skills
-  @ApiProperty({ description: 'Specialty/expertise area', enum: SubcontractorSpecialty, example: SubcontractorSpecialty.ELECTRICAL })
+  @ApiProperty({
+    description: 'Specialty/expertise area',
+    enum: SubcontractorSpecialty,
+    example: SubcontractorSpecialty.ELECTRICAL,
+  })
   @Prop({ enum: Object.values(SubcontractorSpecialty), type: String })
   @IsEnum(SubcontractorSpecialty)
   @IsOptional()
   specialty?: SubcontractorSpecialty;
 
-  @ApiProperty({ description: 'Additional skills or certifications', example: ['Solar PV Installation', 'Electrical Wiring'] })
+  @ApiProperty({
+    description: 'Additional skills or certifications',
+    example: ['Solar PV Installation', 'Electrical Wiring'],
+  })
   @Prop({ type: [String], default: [] })
   @IsArray()
   @IsOptional()
@@ -143,12 +187,19 @@ export class Subcontractor {
   @Max(5)
   rating?: number;
 
-  @ApiProperty({ description: 'Whether subcontractor is currently active', example: true })
+  @ApiProperty({
+    description: 'Whether subcontractor is currently active',
+    example: true,
+  })
   @Prop({ default: true })
   @IsBoolean()
   isActive: boolean;
 
-  @ApiProperty({ description: 'Additional notes about the subcontractor', example: 'Reliable electrical contractor with experience in solar installations across Kenya.' })
+  @ApiProperty({
+    description: 'Additional notes about the subcontractor',
+    example:
+      'Reliable electrical contractor with experience in solar installations across Kenya.',
+  })
   @Prop({ trim: true })
   @IsOptional()
   @IsString()
@@ -156,7 +207,6 @@ export class Subcontractor {
 }
 
 export const SubcontractorSchema = SchemaFactory.createForClass(Subcontractor);
-
 
 @Schema({ timestamps: true })
 export class Task {
@@ -177,7 +227,11 @@ export class Task {
   assignedSubcontractor?: Types.ObjectId;
 
   @ApiProperty({ description: 'Current task status', enum: TaskStatus })
-  @Prop({ required: true, enum: Object.values(TaskStatus), default: TaskStatus.PENDING })
+  @Prop({
+    required: true,
+    enum: Object.values(TaskStatus),
+    default: TaskStatus.PENDING,
+  })
   @IsEnum(TaskStatus)
   status: TaskStatus;
 
@@ -257,7 +311,10 @@ export class Milestone {
   @Max(100)
   progress: number;
 
-  @ApiProperty({ description: 'Tasks associated with this milestone', type: [Task] })
+  @ApiProperty({
+    description: 'Tasks associated with this milestone',
+    type: [Task],
+  })
   @Prop({ type: [TaskSchema], default: [] })
   @IsArray()
   tasks: Task[];
@@ -340,7 +397,6 @@ export class RiskItem {
 
 export const RiskItemSchema = SchemaFactory.createForClass(RiskItem);
 
-
 // ========================= MAIN PROJECT SCHEMA =========================
 
 @Schema({ timestamps: true })
@@ -350,22 +406,39 @@ export class Project {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Linked Safaricom service order ID' })
-  @Prop({ type: Types.ObjectId, ref: 'ServiceOrder', required: true })
-  serviceOrder: Types.ObjectId;
+  // @ApiProperty({ description: 'Linked Safaricom service order ID' })
+  // @Prop({ type: Types.ObjectId, ref: 'ServiceOrder', required: true })
+  // serviceOrder: Types.ObjectId;
 
   // ============= OFGEN TEAM STRUCTURE =============
 
-  @ApiProperty({ description: 'Ofgen project leader responsible for overall project management' })
+  @ApiProperty({
+    description:
+      'Ofgen project leader responsible for overall project management',
+  })
   @Prop({ type: Types.ObjectId, ref: 'User' })
   @IsOptional()
   projectLeader?: Types.ObjectId;
 
-  @ApiProperty({ description: 'Subcontractors assigned to execute project tasks' })
+  @ApiProperty({
+    description: 'Subcontractors assigned to execute project tasks',
+  })
   @Prop({ type: [Types.ObjectId], ref: 'Subcontractor', default: [] })
   @IsArray()
   @IsOptional()
   subcontractors?: Types.ObjectId[];
+
+  @ApiProperty({ description: 'Subcontractor contacts' })
+  @Prop({ type: [{ firstName: String, lastName: String }] })
+  @IsArray()
+  @IsOptional()
+  additionalSubcontractors?: { firstName: string; lastName: string }[];
+
+  @ApiProperty({ description: 'Linked Safaricom service order URL' })
+  @Prop({ trim: true })
+  @IsOptional()
+  @IsString()
+  serviceOrderUrl?: string;
 
   // ============= PROJECT DETAILS =============
 
@@ -379,14 +452,20 @@ export class Project {
   @IsString()
   capacity?: string;
 
-  @ApiProperty({ description: 'Type of project (Tower Installation, Network Upgrade, etc.)' })
+  @ApiProperty({
+    description: 'Type of project (Tower Installation, Network Upgrade, etc.)',
+  })
   @Prop({ trim: true })
   @IsOptional()
   @IsString()
   projectType?: string;
 
   @ApiProperty({ description: 'Current project status', enum: ProjectStatus })
-  @Prop({ required: true, enum: Object.values(ProjectStatus), default: ProjectStatus.PLANNED })
+  @Prop({
+    required: true,
+    enum: Object.values(ProjectStatus),
+    default: ProjectStatus.PLANNED,
+  })
   @IsEnum(ProjectStatus)
   status: ProjectStatus;
 
@@ -431,7 +510,10 @@ export class Project {
   @IsOptional()
   milestones?: Milestone[];
 
-  @ApiProperty({ description: 'Project risks and mitigation plans', type: [RiskItem] })
+  @ApiProperty({
+    description: 'Project risks and mitigation plans',
+    type: [RiskItem],
+  })
   @Prop({ type: [RiskItemSchema], default: [] })
   @IsArray()
   @IsOptional()
@@ -473,13 +555,13 @@ export class Project {
   @ApiProperty({ description: 'Number of days since project started' })
   daysInProgress?: number;
 
-  @ApiProperty({ description: 'Number of days remaining until target completion' })
+  @ApiProperty({
+    description: 'Number of days remaining until target completion',
+  })
   daysRemaining?: number;
 
   @ApiProperty({ description: 'Whether project is behind schedule' })
   isBehindSchedule?: boolean;
-
-
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
@@ -487,16 +569,20 @@ export const ProjectSchema = SchemaFactory.createForClass(Project);
 // virtual fields and middleware
 ProjectSchema.virtual('daysInProgress').get(function () {
   if (!this.actualStartDate) return 0;
-  return Math.floor((Date.now() - this.actualStartDate.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.floor(
+    (Date.now() - this.actualStartDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
 });
 
 ProjectSchema.virtual('daysRemaining').get(function () {
   if (!this.targetCompletionDate) return null;
-  return Math.floor((this.targetCompletionDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return Math.floor(
+    (this.targetCompletionDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+  );
 });
 
 ProjectSchema.virtual('isBehindSchedule').get(function () {
-  if (!this.targetCompletionDate || this.status === ProjectStatus.COMPLETED) return false;
+  if (!this.targetCompletionDate || this.status === ProjectStatus.COMPLETED)
+    return false;
   return Date.now() > this.targetCompletionDate.getTime();
 });
-
