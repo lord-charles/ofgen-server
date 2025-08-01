@@ -64,20 +64,22 @@ export class ProjectService {
   async findAll(status?: ProjectStatus): Promise<Project[]> {
     const filter = status ? { status } : {};
 
-    return this.projectModel
-      .find(filter)
-      .populate('location')
-      .populate('serviceOrder')
-      .populate('projectLeader')
-      .populate('subcontractors')
-      .exec();
+    return (
+      this.projectModel
+        .find(filter)
+        .populate('location')
+        // .populate('serviceOrder')
+        .populate('projectLeader')
+        .populate('subcontractors')
+        .exec()
+    );
   }
 
   async findOne(id: string): Promise<Project> {
     const project = await this.projectModel
       .findById(id)
       .populate('location')
-      .populate('serviceOrder')
+      // .populate('serviceOrder')
       .populate('projectLeader')
       .populate('subcontractors')
       .exec();
